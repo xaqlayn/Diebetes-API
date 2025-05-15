@@ -2,10 +2,9 @@
 fastapi==0.103.2
 uvicorn==0.23.2
 pydantic==2.5.3
-numpy==1.23.5
-scikit-learn==1.2.2  # Last version with Python 3.9 wheels
-joblib==1.2.0  # Required for scikit-learn model loading
+numpy==1.23.5  # Now compatible with Python 3.9
+scikit-learn==1.2.2  # Compatible with Python 3.9
+joblib==1.2.0
 setuptools==68.2.2
 wheel==0.41.3
-Cython==3.0.7
---only-binary=scikit-learn,numpy  # Force binary installs
+--only-binary=scikit-learn,numpy
