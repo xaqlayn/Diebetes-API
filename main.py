@@ -1,8 +1,32 @@
+@app.get("/web", response_class=HTMLResponse)
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import pickle
 import logging
 from starlette.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+
+def web_form():
+    # Simple HTML form (you can style it as needed)
+    return """
+    <html>
+    <head><title>Diabetes Prediction</title></head>
+    <body>
+        <h2>Diabetes Prediction Form</h2>
+        <form action="/diabetes-predict" method="post">
+            Pregnancies: <input type="number" name="Pregnancies" min="0"><br>
+            Glucose: <input type="number" name="Glucose" min="0" max="300"><br>
+            BloodPressure: <input type="number" name="BloodPressure" min="0" max="200"><br>
+            SkinThickness: <input type="number" name="SkinThickness" min="0" max="99"><br>
+            Insulin: <input type="number" name="Insulin" min="0" max="900"><br>
+            BMI: <input type="number" step="any" name="BMI" min="10" max="80"><br>
+            DiabetesPedigreeFunction: <input type="number" step="any" name="DiabetesPedigreeFunction" min="0" max="2.5"><br>
+            Age: <input type="number" name="Age" min="1" max="120"><br>
+            <input type="submit" value="Predict">
+        </form>
+    </body>
+    </html>
+    """
 
 app = FastAPI(
     title="Diabetes Prediction API",
