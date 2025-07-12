@@ -11,13 +11,71 @@ app = FastAPI(
     version="1.1.0"
 )
 
-@app.get("/web", response_class=HTMLResponse)
 def web_form():
-    # Interactive HTML form with JS to show result on page
+    # Interactive HTML form with JS and modern CSS
     return """
     <html>
     <head>
         <title>Diabetes Prediction</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background: #f7fafc;
+                color: #222;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                max-width: 400px;
+                margin: 40px auto;
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+                padding: 32px 24px 24px 24px;
+            }
+            h2 {
+                text-align: center;
+                margin-bottom: 24px;
+                color: #337ab7;
+                font-weight: 600;
+            }
+            label {
+                display: block;
+                margin-bottom: 6px;
+                font-size: 15px;
+                color: #555;
+            }
+            input[type="number"], input[type="text"] {
+                width: 100%;
+                padding: 8px 10px;
+                border-radius: 5px;
+                border: 1px solid #d1d5db;
+                margin-bottom: 16px;
+                font-size: 16px;
+            }
+            input[type="submit"] {
+                background: #337ab7;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 0;
+                font-size: 18px;
+                cursor: pointer;
+                width: 100%;
+                margin-top: 10px;
+                transition: background 0.2s;
+            }
+            input[type="submit"]:hover {
+                background: #23527c;
+            }
+            #result {
+                text-align: center;
+                margin-top: 18px;
+                font-size: 18px;
+                font-weight: 500;
+                color: #444;
+            }
+        </style>
         <script>
         async function predictDiabetes(event) {
             event.preventDefault();
@@ -32,7 +90,7 @@ def web_form():
                 DiabetesPedigreeFunction: parseFloat(form.DiabetesPedigreeFunction.value),
                 Age: parseInt(form.Age.value)
             };
-            document.getElementById('result').innerHTML = 'Loading...';
+            document.getElementById('result').innerHTML = 'Predicting...';
             const response = await fetch('/diabetes-predict', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -46,22 +104,37 @@ def web_form():
         </script>
     </head>
     <body>
-        <h2>Diabetes Prediction Form</h2>
-        <form onsubmit="predictDiabetes(event)">
-            Pregnancies: <input type="number" name="Pregnancies" min="0" required><br>
-            Glucose: <input type="number" name="Glucose" min="0" max="300" required><br>
-            BloodPressure: <input type="number" name="BloodPressure" min="0" max="200" required><br>
-            SkinThickness: <input type="number" name="SkinThickness" min="0" max="99" required><br>
-            Insulin: <input type="number" name="Insulin" min="0" max="900" required><br>
-            BMI: <input type="number" step="any" name="BMI" min="10" max="80" required><br>
-            DiabetesPedigreeFunction: <input type="number" step="any" name="DiabetesPedigreeFunction" min="0" max="2.5" required><br>
-            Age: <input type="number" name="Age" min="1" max="120" required><br>
-            <input type="submit" value="Predict">
-        </form>
-        <div id="result" style="margin-top:20px;"></div>
+        <div class="container">
+            <h2>Diabetes Prediction Form</h2>
+            <form onsubmit="predictDiabetes(event)">
+                <label for="Pregnancies">Pregnancies</label>
+                <input type="number" name="Pregnancies" min="0" required>
+                <label for="Glucose">Glucose</label>
+                <input type="number" name="Glucose" min="0" max="300" required>
+                <label for="BloodPressure">Blood Pressure</label>
+                <input type="number" name="BloodPressure" min="0" max="200" required>
+                <label for="SkinThickness">Skin Thickness</label>
+                <input type="number" name="SkinThickness" min="0" max="99" required>
+                <label for="Insulin">Insulin</label>
+                <input type="number" name="Insulin" min="0" max="900" required>
+                <label for="BMI">BMI</label>
+                <input type="number" step="any" name="BMI" min="10" max="80" required>
+                <label for="DiabetesPedigreeFunction">Diabetes Pedigree Function</label>
+                <input type="number" step="any" name="DiabetesPedigreeFunction" min="0" max="2.5" required>
+                <label for="Age">Age</label>
+                <input type="number" name="Age" min="1" max="120" required>
+                <input type="submit" value="Predict">
+            </form>
+            <div id="result"></div>
+        </div>
     </body>
     </html>
     """
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/web", response_class=HTMLResponse)
+def home():
+    return web_form()
 
 # Enable CORS for all origins
 app.add_middleware(
@@ -93,11 +166,6 @@ try:
 except Exception as e:
     logging.error("Failed to load model: %s", e)
     raise RuntimeError("Model loading failed")
-
-@app.get("/", tags=["Health"])
-def read_root():
-    """Health check endpoint."""
-    return {"message": "FastAPI is running!"}
 
 @app.post("/diabetes-predict", tags=["Prediction"])
 async def predict(data: RawData):
