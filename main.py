@@ -1,10 +1,14 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 import pickle
-
+import logging
 from starlette.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+app = FastAPI(
+    title="Diabetes Prediction API",
+    description="Predict diabetes likelihood using medical data.",
+    version="1.1.0"
+)
 
 # Enable CORS for all origins
 app.add_middleware(
@@ -15,37 +19,60 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Model input schema
+# Improved input schema with validation
 class RawData(BaseModel):
-    Pregnancies: int
-    Glucose: int
-    BloodPressure: int
-    SkinThickness: int
-    Insulin: int
-    BMI: float
-    DiabetesPedigreeFunction: float
-    Age: int
+    Pregnancies: int = Field(..., ge=0, description="Number of times pregnant")
+    Glucose: int = Field(..., ge=0, le=300, description="Glucose concentration")
+    BloodPressure: int = Field(..., ge=0, le=200, description="Blood pressure value")
+    SkinThickness: int = Field(..., ge=0, le=99, description="Skin thickness in mm")
+    Insulin: int = Field(..., ge=0, le=900, description="Insulin level")
+    BMI: float = Field(..., ge=10, le=80, description="Body Mass Index")
+    DiabetesPedigreeFunction: float = Field(..., ge=0, le=2.5, description="DPF value")
+    Age: int = Field(..., ge=1, le=120, description="Age in years")
 
-# Load the ML model
-with open('diabetes_model.sav', 'rb') as file:
-    model = pickle.load(file)
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 
-@app.get("/")
+# Load the ML model with error handling
+try:
+    with open('diabetes_model.sav', 'rb') as file:
+        model = pickle.load(file)
+except Exception as e:
+    logging.error("Failed to load model: %s", e)
+    raise RuntimeError("Model loading failed")
+
+@app.get("/", tags=["Health"])
 def read_root():
+    """Health check endpoint."""
     return {"message": "FastAPI is running!"}
 
-@app.post("/diabetes-predict")
+@app.post("/diabetes-predict", tags=["Prediction"])
 async def predict(data: RawData):
-    input_list = [
-        data.Pregnancies,
-        data.Glucose,
-        data.BloodPressure,
-        data.SkinThickness,
-        data.Insulin,
-        data.BMI,
-        data.DiabetesPedigreeFunction,
-        data.Age,
-    ]
-    prediction = model.predict([input_list])
-    result = "Diabetic" if prediction[0] == 1 else "Not Diabetic"
-    return {"prediction": result}
+    """
+    Predict diabetes risk.
+    Returns label and probability.
+    """
+    try:
+        input_list = [
+            data.Pregnancies,
+            data.Glucose,
+            data.BloodPressure,
+            data.SkinThickness,
+            data.Insulin,
+            data.BMI,
+            data.DiabetesPedigreeFunction,
+            data.Age,
+        ]
+        prediction = model.predict([input_list])
+        result = "Diabetic" if prediction[0] == 1 else "Not Diabetic"
+        # Try to get probability (if model supports it)
+        if hasattr(model, "predict_proba"):
+            prob = float(model.predict_proba([input_list])[0][1])
+            logging.info(f"Prediction: {result}, Probability: {prob:.2f}")
+            return {"prediction": result, "probability": round(prob, 2)}
+        else:
+            logging.info(f"Prediction: {result}")
+            return {"prediction": result}
+    except Exception as e:
+        logging.error("Prediction error: %s", e)
+        raise HTTPException(status_code=500, detail="Prediction failed.")
