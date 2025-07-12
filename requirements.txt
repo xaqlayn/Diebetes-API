@@ -2,7 +2,7 @@
 fastapi==0.103.2
 uvicorn==0.23.2
 pydantic==2.5.3
-numpy==1.23.5  # Now compatible with Python 3.9
+numpy # Now compatible with Python 3.9
 scikit-learn==1.2.2  # Compatible with Python 3.9
 joblib==1.2.0
 setuptools==68.2.2
