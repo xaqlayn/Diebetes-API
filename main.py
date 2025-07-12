@@ -5,9 +5,6 @@ import logging
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
-
-    
-
 app = FastAPI(
     title="Diabetes Prediction API",
     description="Predict diabetes likelihood using medical data.",
@@ -16,23 +13,52 @@ app = FastAPI(
 
 @app.get("/web", response_class=HTMLResponse)
 def web_form():
-    # Simple HTML form (you can style it as needed)
+    # Interactive HTML form with JS to show result on page
     return """
     <html>
-    <head><title>Diabetes Prediction</title></head>
+    <head>
+        <title>Diabetes Prediction</title>
+        <script>
+        async function predictDiabetes(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+                Pregnancies: parseInt(form.Pregnancies.value),
+                Glucose: parseInt(form.Glucose.value),
+                BloodPressure: parseInt(form.BloodPressure.value),
+                SkinThickness: parseInt(form.SkinThickness.value),
+                Insulin: parseInt(form.Insulin.value),
+                BMI: parseFloat(form.BMI.value),
+                DiabetesPedigreeFunction: parseFloat(form.DiabetesPedigreeFunction.value),
+                Age: parseInt(form.Age.value)
+            };
+            document.getElementById('result').innerHTML = 'Loading...';
+            const response = await fetch('/diabetes-predict', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            document.getElementById('result').innerHTML =
+                'Prediction: <b>' + result.prediction + '</b>' +
+                (result.probability !== undefined ? '<br>Probability: <b>' + result.probability + '</b>' : '');
+        }
+        </script>
+    </head>
     <body>
         <h2>Diabetes Prediction Form</h2>
-        <form action="/diabetes-predict" method="post">
-            Pregnancies: <input type="number" name="Pregnancies" min="0"><br>
-            Glucose: <input type="number" name="Glucose" min="0" max="300"><br>
-            BloodPressure: <input type="number" name="BloodPressure" min="0" max="200"><br>
-            SkinThickness: <input type="number" name="SkinThickness" min="0" max="99"><br>
-            Insulin: <input type="number" name="Insulin" min="0" max="900"><br>
-            BMI: <input type="number" step="any" name="BMI" min="10" max="80"><br>
-            DiabetesPedigreeFunction: <input type="number" step="any" name="DiabetesPedigreeFunction" min="0" max="2.5"><br>
-            Age: <input type="number" name="Age" min="1" max="120"><br>
+        <form onsubmit="predictDiabetes(event)">
+            Pregnancies: <input type="number" name="Pregnancies" min="0" required><br>
+            Glucose: <input type="number" name="Glucose" min="0" max="300" required><br>
+            BloodPressure: <input type="number" name="BloodPressure" min="0" max="200" required><br>
+            SkinThickness: <input type="number" name="SkinThickness" min="0" max="99" required><br>
+            Insulin: <input type="number" name="Insulin" min="0" max="900" required><br>
+            BMI: <input type="number" step="any" name="BMI" min="10" max="80" required><br>
+            DiabetesPedigreeFunction: <input type="number" step="any" name="DiabetesPedigreeFunction" min="0" max="2.5" required><br>
+            Age: <input type="number" name="Age" min="1" max="120" required><br>
             <input type="submit" value="Predict">
         </form>
+        <div id="result" style="margin-top:20px;"></div>
     </body>
     </html>
     """
