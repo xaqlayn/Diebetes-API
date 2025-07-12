@@ -1,4 +1,3 @@
-@app.get("/web", response_class=HTMLResponse)
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import pickle
@@ -6,6 +5,16 @@ import logging
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
+
+    
+
+app = FastAPI(
+    title="Diabetes Prediction API",
+    description="Predict diabetes likelihood using medical data.",
+    version="1.1.0"
+)
+
+@app.get("/web", response_class=HTMLResponse)
 def web_form():
     # Simple HTML form (you can style it as needed)
     return """
@@ -27,12 +36,6 @@ def web_form():
     </body>
     </html>
     """
-
-app = FastAPI(
-    title="Diabetes Prediction API",
-    description="Predict diabetes likelihood using medical data.",
-    version="1.1.0"
-)
 
 # Enable CORS for all origins
 app.add_middleware(
