@@ -138,8 +138,7 @@ Contributing
 - Include tests for new functionality.
 - Update docs when you change endpoints.
 
-License
-- Add your LICENSE file (e.g., MIT).
+
 
 Contact
 - Maintainer: xaqlayn
